@@ -61,131 +61,121 @@
   <div class="preview-container" id="previewContainer"></div>
 
   <script>
-    let baseImages = [];
-    let watermarkImage;
-    let watermarkSize = 100;
-    let watermarkPosition = 'center';
+let baseImages = [];
+let watermarkImage;
+let watermarkSize = 100;
+let watermarkPosition = 'center';
 
-    function setup() {
-      noLoop(); // Disable continuous drawing
+function setup() {
+  noLoop(); // Disable continuous drawing
 
-      // Set up event listeners
-      document.getElementById('baseImageUpload').addEventListener('change', handleBaseImageUpload);
-      document.getElementById('watermarkUpload').addEventListener('change', handleWatermarkUpload);
-      document.getElementById('watermarkSize').addEventListener('input', handleWatermarkSizeChange);
-      document.getElementById('watermarkPosition').addEventListener('change', handleWatermarkPositionChange);
-      document.getElementById('downloadWatermarkedImages').addEventListener('click', downloadWatermarkedImages);
-    }
+  // Set up event listeners
+  document.getElementById('baseImageUpload').addEventListener('change', handleBaseImageUpload);
+  document.getElementById('watermarkUpload').addEventListener('change', handleWatermarkUpload);
+  document.getElementById('watermarkSize').addEventListener('input', handleWatermarkSizeChange);
+  document.getElementById('watermarkPosition').addEventListener('change', handleWatermarkPositionChange);
+  document.getElementById('downloadWatermarkedImages').addEventListener('click', downloadWatermarkedImages);
+}
 
-    function drawImages() {
-      if (baseImages.length > 0 && watermarkImage) {
-        document.getElementById('previewContainer').innerHTML = ''; // Clear previous previews
+function drawImages() {
+  if (baseImages.length > 0 && watermarkImage) {
+    document.getElementById('previewContainer').innerHTML = ''; // Clear previous previews
 
-        baseImages.forEach((baseImage, index) => {
-          // Set canvas size to match image
-          createCanvas(baseImage.width, baseImage.height);
-          background(255);
+    baseImages.forEach((baseImage, index) => {
+      // Set canvas size to match image
+      createCanvas(baseImage.width, baseImage.height);
+      background(255);
 
-          // Draw the base image
-          image(baseImage, 0, 0, width, height);
+      // Draw the base image
+      image(baseImage, 0, 0, width, height);
 
-          // Calculate watermark position
-          let x, y;
-          if (watermarkPosition === 'center') {
-            x = (width - watermarkSize) / 2;
-            y = (height - watermarkSize) / 2;
-          } else if (watermarkPosition === 'upper-left') {
-            x = 0;
-            y = 0;
-          } else if (watermarkPosition === 'upper-right') {
-            x = width - watermarkSize;
-            y = 0;
-          } else if (watermarkPosition === 'bottom-left') {
-            x = 0;
-            y = height - watermarkSize;
-          } else if (watermarkPosition === 'bottom-right') {
-            x = width - watermarkSize;
-            y = height - watermarkSize;
-          }
-
-          // Draw watermark
-          image(watermarkImage, x, y, watermarkSize, watermarkSize);
-
-          // Convert canvas to image URL for preview
-          const imageURL = canvas.toDataURL('image/png');
-
-          // Create image element for preview
-          const img = document.createElement('img');
-          img.src = imageURL;
-          img.classList.add('preview-image');
-          img.alt = `Watermarked Image ${index + 1}`;
-
-          // Append image to preview container
-          document.getElementById('previewContainer').appendChild(img);
-          
-          // Create ZIP entry
-          createZip(baseImage, index);
-        });
+      // Calculate watermark position
+      let x, y;
+      if (watermarkPosition === 'center') {
+        x = (width - watermarkSize) / 2;
+        y = (height - watermarkSize) / 2;
+      } else if (watermarkPosition === 'upper-left') {
+        x = 0;
+        y = 0;
+      } else if (watermarkPosition === 'upper-right') {
+        x = width - watermarkSize;
+        y = 0;
+      } else if (watermarkPosition === 'bottom-left') {
+        x = 0;
+        y = height - watermarkSize;
+      } else if (watermarkPosition === 'bottom-right') {
+        x = width - watermarkSize;
+        y = height - watermarkSize;
       }
-    }
 
-    function handleBaseImageUpload(event) {
-      const files = event.target.files;
-      if (files.length > 0) {
-        baseImages = Array.from(files).map(file => loadImage(URL.createObjectURL(file), drawImages));
-      }
-    }
+      // Draw watermark
+      image(watermarkImage, x, y, watermarkSize, watermarkSize);
 
-    function handleWatermarkUpload(event) {
-      const file = event.target.files[0];
-      if (file && file.type.startsWith('image/')) {
-        watermarkImage = loadImage(URL.createObjectURL(file), drawImages);
-      }
-    }
+      // Convert canvas to image URL for preview
+      const imageURL = canvas.toDataURL('image/png');
 
-    function handleWatermarkSizeChange() {
-      watermarkSize = parseInt(document.getElementById('watermarkSize').value, 10);
-      drawImages();
-    }
+      // Create image element for preview
+      const img = document.createElement('img');
+      img.src = imageURL;
+      img.classList.add('preview-image');
+      img.alt = `Watermarked Image ${index + 1}`;
 
-    function handleWatermarkPositionChange() {
-      watermarkPosition = document.getElementById('watermarkPosition').value;
-      drawImages();
-    }
+      // Append image to preview container
+      document.getElementById('previewContainer').appendChild(img);
+      
+      // Create ZIP entry
+      createZip(imageURL, index);
+    });
+  }
+}
 
-    function createZip(baseImage, index) {
-      const zip = new JSZip();
-      const canvas = document.getElementById('myCanvas');
-      const ctx = canvas.getContext('2d');
-      
-      // Set canvas size to match base image
-      canvas.width = baseImage.width;
-      canvas.height = baseImage.height;
-      
-      // Draw base image and watermark
-      ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
-      ctx.drawImage(watermarkImage, (canvas.width - watermarkSize) / 2, (canvas.height - watermarkSize) / 2, watermarkSize, watermarkSize);
-      
-      // Convert canvas to data URL
-      const imageBlob = canvas.toDataURL('image/png').split(';base64,').pop();
-      
-      // Add to ZIP file
-      zip.file(`watermarked_image_${index}.png`, imageBlob, { base64: true });
-      
+function handleBaseImageUpload(event) {
+  const files = event.target.files;
+  if (files.length > 0) {
+    baseImages = Array.from(files).map(file => loadImage(URL.createObjectURL(file), drawImages));
+  }
+}
+
+function handleWatermarkUpload(event) {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    watermarkImage = loadImage(URL.createObjectURL(file), drawImages);
+  }
+}
+
+function handleWatermarkSizeChange() {
+  watermarkSize = parseInt(document.getElementById('watermarkSize').value, 10);
+  drawImages();
+}
+
+function handleWatermarkPositionChange() {
+  watermarkPosition = document.getElementById('watermarkPosition').value;
+  drawImages();
+}
+
+function createZip(imageURL, index) {
+  const zip = new JSZip();
+  
+  // Convert data URL to Blob
+  fetch(imageURL)
+    .then(res => res.blob())
+    .then(blob => {
+      zip.file(`watermarked_image_${index + 1}.png`, blob);
+
       // Generate ZIP file
       zip.generateAsync({ type: 'blob' }).then(blob => {
         saveAs(blob, 'watermarked_images.zip');
       });
-    }
+    });
+}
 
-    function downloadWatermarkedImages() {
-      // Simply trigger ZIP creation for all base images
-      if (baseImages.length > 0 && watermarkImage) {
-        baseImages.forEach((baseImage, index) => {
-          createZip(baseImage, index);
-        });
-      }
-    }
+function downloadWatermarkedImages() {
+  if (baseImages.length > 0 && watermarkImage) {
+    baseImages.forEach((baseImage, index) => {
+      createZip(canvas.toDataURL('image/png'), index);
+    });
+  }
+}
   </script>
 </body>
 </html>
