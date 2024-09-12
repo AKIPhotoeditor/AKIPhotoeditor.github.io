@@ -1,66 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-    }
-    canvas {
-      border: 1px solid black;
-      margin-top: 10px;
-    }
-    .preview-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .preview-image {
-      border: 1px solid black;
-      width: 200px;
-      height: auto;
-    }
-  </style>
-</head>
-<body>
-  <div id="baseImageInput">
-    <label for="baseImageUpload">Upload Base Images:</label>
-    <input type="file" id="baseImageUpload" accept="image/*" multiple>
-  </div>
-
-  <div id="watermarkInput">
-    <label for="watermarkUpload">Upload Watermark:</label>
-    <input type="file" id="watermarkUpload" accept="image/*">
-  </div>
-
-  <div id="watermarkOptions">
-    <label for="watermarkSize">Watermark Size:</label>
-    <input type="number" id="watermarkSize" value="100" min="1" max="500">
-    
-    <label for="watermarkPosition">Watermark Position:</label>
-    <select id="watermarkPosition">
-      <option value="center">Center</option>
-      <option value="upper-left">Upper Left</option>
-      <option value="upper-right">Upper Right</option>
-      <option value="bottom-left">Bottom Left</option>
-      <option value="bottom-right">Bottom Right</option>
-    </select>
-  </div>
-
-  <button id="downloadWatermarkedImages">Download Watermarked Images</button>
-
-  <canvas id="myCanvas" style="display: none;"></canvas>
-
-  <div class="preview-container" id="previewContainer"></div>
-
-  <script>
 let baseImages = [];
 let watermarkImage;
 let watermarkSize = 100;
@@ -122,9 +59,6 @@ function drawImages() {
 
       // Append image to preview container
       document.getElementById('previewContainer').appendChild(img);
-      
-      // Create ZIP entry
-      createZip(imageURL, index);
     });
   }
 }
@@ -153,29 +87,46 @@ function handleWatermarkPositionChange() {
   drawImages();
 }
 
-function createZip(imageURL, index) {
-  const zip = new JSZip();
-  
-  // Convert data URL to Blob
-  fetch(imageURL)
-    .then(res => res.blob())
-    .then(blob => {
-      zip.file(`watermarked_image_${index + 1}.png`, blob);
-
-      // Generate ZIP file
-      zip.generateAsync({ type: 'blob' }).then(blob => {
-        saveAs(blob, 'watermarked_images.zip');
-      });
-    });
-}
-
 function downloadWatermarkedImages() {
   if (baseImages.length > 0 && watermarkImage) {
     baseImages.forEach((baseImage, index) => {
-      createZip(canvas.toDataURL('image/png'), index);
+      // Set canvas size to match image
+      createCanvas(baseImage.width, baseImage.height);
+      background(255);
+
+      // Draw the base image
+      image(baseImage, 0, 0, width, height);
+
+      // Calculate watermark position
+      let x, y;
+      if (watermarkPosition === 'center') {
+        x = (width - watermarkSize) / 2;
+        y = (height - watermarkSize) / 2;
+      } else if (watermarkPosition === 'upper-left') {
+        x = 0;
+        y = 0;
+      } else if (watermarkPosition === 'upper-right') {
+        x = width - watermarkSize;
+        y = 0;
+      } else if (watermarkPosition === 'bottom-left') {
+        x = 0;
+        y = height - watermarkSize;
+      } else if (watermarkPosition === 'bottom-right') {
+        x = width - watermarkSize;
+        y = height - watermarkSize;
+      }
+
+      // Draw watermark
+      image(watermarkImage, x, y, watermarkSize, watermarkSize);
+
+      // Convert canvas to data URL
+      const imageURL = canvas.toDataURL('image/png');
+
+      // Trigger download of the image
+      const a = document.createElement('a');
+      a.href = imageURL;
+      a.download = `watermarked_image_${index + 1}.png`;
+      a.click();
     });
   }
 }
-  </script>
-</body>
-</html>
